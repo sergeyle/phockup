@@ -20,6 +20,7 @@ def main(argv):
     move = False
     link = False
     date_regex = None
+    filter_regex = None
     dir_format = os.path.sep.join(['%Y', '%m', '%d'])
     original_filenames = False
     timestamp = False
@@ -27,7 +28,7 @@ def main(argv):
     dry_run = False
 
     try:
-        opts, args = getopt.getopt(argv[2:], "d:r:f:mltoyh", ["date=", "regex=", "move", "link", "original-names", "timestamp", "date-field=", "dry-run", "help"])
+        opts, args = getopt.getopt(argv[2:], "d:r:f:mltoyh", ["date=", "regex=", "filter-regex=", "move", "link", "original-names", "timestamp", "date-field=", "dry-run", "help"])
     except getopt.GetoptError:
         help(version)
         sys.exit(2)
@@ -74,6 +75,12 @@ def main(argv):
             date_field = arg
             printer.line("Using as date field: %s" % date_field)
 
+        if opt == "--filter-regex":
+            try:
+                filter_regex = re.compile(arg)
+            except:
+                priner.error("Provided filter regex is invalid.")
+
 
     if link and move:
         printer.error("Can't use move and link strategy together")
@@ -92,6 +99,7 @@ def main(argv):
         timestamp=timestamp,
         date_field=date_field,
         dry_run=dry_run,
+        filter_regex=filter_regex,
     )
 
 

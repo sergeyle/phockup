@@ -33,6 +33,7 @@ class Phockup():
         self.timestamp = args.get('timestamp', False)
         self.date_field = args.get('date_field', False)
         self.dry_run = args.get('dry_run', False)
+        self.filter_regex = args.get('filter_regex', False)
 
         self.check_directories()
         self.walk_directory()
@@ -61,7 +62,8 @@ class Phockup():
         for root, _, files in os.walk(self.input):
             files.sort()
             for filename in files:
-                if filename in ignored_files:
+                if (filename in ignored_files or
+                    (self.filter_regex and self.filter_regex.match(filename))):
                     continue
 
                 file = os.path.join(root, filename)
