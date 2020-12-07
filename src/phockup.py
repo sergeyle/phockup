@@ -62,7 +62,6 @@ class Phockup():
         """
         Walk input directory recursively and call process_file for each file except the ignored ones
         """
-        printer.line(self.file_filter.regex)
         for root, _, files in os.walk(self.input):
             files.sort()
             for filename in files:
