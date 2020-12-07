@@ -5,6 +5,8 @@ import re
 import shutil
 import sys
 
+from collections import namedtuple
+
 from src.date import Date
 from src.exif import Exif
 from src.printer import Printer
@@ -12,6 +14,7 @@ from src.printer import Printer
 printer = Printer()
 ignored_files = (".DS_Store", "Thumbs.db")
 
+FileFilter = namedtuple("FileFilter", ["mode", "regex"])
 
 class Phockup():
     def __init__(self, input, output, **args):
@@ -33,7 +36,7 @@ class Phockup():
         self.timestamp = args.get('timestamp', False)
         self.date_field = args.get('date_field', False)
         self.dry_run = args.get('dry_run', False)
-        self.filter_regex = args.get('filter_regex', False)
+        self.file_filter = args.get('file_filter', False)
 
         self.check_directories()
         self.walk_directory()
@@ -59,12 +62,18 @@ class Phockup():
         """
         Walk input directory recursively and call process_file for each file except the ignored ones
         """
+        printer.line(self.file_filter.regex)
         for root, _, files in os.walk(self.input):
             files.sort()
             for filename in files:
-                if (filename in ignored_files or
-                    (self.filter_regex and self.filter_regex.match(filename))):
+                if filename in ignored_files:
                     continue
+
+                if self.file_filter:
+                    is_match = (self.file_filter.regex.search(filename) is not None)
+                    if ((is_match and self.file_filter.mode == "filter") or
+                        (not is_match and self.file_filter.mode == "allow")):
+                        continue
 
                 file = os.path.join(root, filename)
                 self.process_file(file)

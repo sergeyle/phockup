@@ -7,7 +7,7 @@ import sys
 from src.date import Date
 from src.dependency import check_dependencies
 from src.help import help
-from src.phockup import Phockup
+from src.phockup import Phockup, FileFilter
 from src.printer import Printer
 
 version = '1.5.9'
@@ -20,6 +20,7 @@ def main(argv):
     move = False
     link = False
     date_regex = None
+    allow_regex = None
     filter_regex = None
     dir_format = os.path.sep.join(['%Y', '%m', '%d'])
     original_filenames = False
@@ -28,7 +29,11 @@ def main(argv):
     dry_run = False
 
     try:
-        opts, args = getopt.getopt(argv[2:], "d:r:f:mltoyh", ["date=", "regex=", "filter-regex=", "move", "link", "original-names", "timestamp", "date-field=", "dry-run", "help"])
+        opts, args = getopt.getopt(argv[2:], "d:r:f:mltoyh",
+                                   ["date=", "regex=", "move", "link",
+                                    "original-names", "timestamp",
+                                    "date-field=", "dry-run", "help",
+                                    "allow-regex=", "filter-regex="])
     except getopt.GetoptError:
         help(version)
         sys.exit(2)
@@ -75,15 +80,30 @@ def main(argv):
             date_field = arg
             printer.line("Using as date field: %s" % date_field)
 
+        if opt == "--allow-regex":
+            try:
+                allow_regex = re.compile(arg)
+            except:
+                printer.error("Provided allow regex is invalid.")
+
         if opt == "--filter-regex":
             try:
                 filter_regex = re.compile(arg)
             except:
-                priner.error("Provided filter regex is invalid.")
+                printer.error("Provided filter regex is invalid.")
 
+    file_filter = None
+    if allow_regex and filter_regex:
+        printer.error("Can't use allow_regex and filter_regex together.")
+    elif allow_regex is not None:
+        file_filter = FileFilter(mode="allow", regex=allow_regex)
+    elif filter_regex is not None:
+        file_filter = FileFilter(mode="filter", regex=filter_regex)
+                                 
 
     if link and move:
         printer.error("Can't use move and link strategy together")
+        
 
     if len(argv) < 2:
         help(version)
@@ -99,7 +119,7 @@ def main(argv):
         timestamp=timestamp,
         date_field=date_field,
         dry_run=dry_run,
-        filter_regex=filter_regex,
+        file_filter=file_filter,
     )
 
 
